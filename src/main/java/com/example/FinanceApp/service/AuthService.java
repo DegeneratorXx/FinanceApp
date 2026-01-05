@@ -5,10 +5,8 @@ import com.example.FinanceApp.dto.auth.RegisterRequest;
 import com.example.FinanceApp.entity.User;
 import com.example.FinanceApp.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 
 @Service
 public class AuthService {
