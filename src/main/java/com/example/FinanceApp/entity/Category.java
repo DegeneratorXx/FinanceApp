@@ -1,8 +1,12 @@
 package com.example.FinanceApp.entity;
 
 import jakarta.persistence.*;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Entity
+@Slf4j
+@NoArgsConstructor
 public class Category {
 
     @Id
@@ -22,44 +26,12 @@ public class Category {
     @ManyToOne
     private User user;
 
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
+    public Category(String name, CategoryType type, boolean isCustom, User user) {
+        this.name = name;
+        this.type = type;
+        this.isCustom = isCustom;
         this.user = user;
     }
 
-    public boolean isCustom() {
-        return isCustom;
-    }
 
-    public void setCustom(boolean custom) {
-        isCustom = custom;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public CategoryType getType() {
-        return type;
-    }
-
-    public void setType(CategoryType type) {
-        this.type = type;
-    }
 }
