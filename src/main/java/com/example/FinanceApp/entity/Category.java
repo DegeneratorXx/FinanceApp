@@ -1,11 +1,12 @@
 package com.example.FinanceApp.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Entity
-@Slf4j
+@Data
 @NoArgsConstructor
 public class Category {
 

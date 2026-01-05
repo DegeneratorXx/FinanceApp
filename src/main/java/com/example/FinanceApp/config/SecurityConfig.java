@@ -16,11 +16,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth->auth.requestMatchers(
                         "/h2-console/**",
                         "/error",
-                        "/"
+                        "/api/auth/**",
+                        "/api/health"
                 ).permitAll()
-                        .anyRequest().permitAll())
-                .headers(headers->headers
-                        .frameOptions(frame->frame.disable()));
+                        .anyRequest().authenticated())
+                .formLogin(form->form.disable())
+                .httpBasic(basic->basic.disable())
+                .headers(headers->headers.frameOptions(frame->frame.disable()));
 
         return http.build();
     }
