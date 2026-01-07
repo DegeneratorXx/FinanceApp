@@ -6,6 +6,7 @@ import com.example.FinanceApp.entity.Category;
 import com.example.FinanceApp.entity.CategoryType;
 import com.example.FinanceApp.entity.User;
 import com.example.FinanceApp.repository.CategoryRepository;
+import com.example.FinanceApp.repository.TransactionRepository;
 import com.example.FinanceApp.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
@@ -17,10 +18,12 @@ import java.util.stream.Collectors;
 public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final TransactionRepository transactionRepository;
 
-    public CategoryService(CategoryRepository categoryRepository, UserRepository userRepository){
+    public CategoryService(CategoryRepository categoryRepository, UserRepository userRepository,TransactionRepository transactionRepository){
         this.categoryRepository=categoryRepository;
         this.userRepository=userRepository;
+        this.transactionRepository=transactionRepository;
     }
 
     private User getLoggedInUser(HttpSession session) {
@@ -72,6 +75,13 @@ public class CategoryService {
 
     public void deleteCategory(String name,HttpSession session){
         User user = getLoggedInUser(session);
+        boolean used =
+                transactionRepository.existsByCategoryNameAndUserId(name, user.getId());
+
+        if (used) {
+            throw new RuntimeException("Category in use");
+        }
+
         Category category = categoryRepository.findAll().stream()
                 .filter(c->c.getName().equals(name))
                 .findFirst()

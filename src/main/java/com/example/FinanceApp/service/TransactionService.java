@@ -12,6 +12,7 @@ import com.example.FinanceApp.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,13 +46,22 @@ public class TransactionService {
     }
 
     public TransactionResponse create(TransactionRequest request, HttpSession session){
+        if (request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Amount must be greater than zero");
+        }
+
         User user= getLoggedInUser(session);
 
         if(request.date.isAfter(LocalDate.now()))
             throw new RuntimeException("FutureDate Not Allowed");
 
-        Category category = categoryRepository.findById(request.categoryId)
-                .orElseThrow(()->new RuntimeException("Invalid Category"));
+        Category category = categoryRepository
+                .findByNameAndUserId(request.getCategory(), user.getId())
+                .orElseGet(() ->
+                        categoryRepository.findByNameAndUserIsNull(request.getCategory())
+                                .orElseThrow(() -> new RuntimeException("Category not found"))
+                );
+
 
         Transaction tx=Transaction.builder()
                 .amount(request.amount)

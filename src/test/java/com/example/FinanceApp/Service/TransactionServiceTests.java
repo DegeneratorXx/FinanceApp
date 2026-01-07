@@ -34,7 +34,7 @@ public class TransactionServiceTests {
         TransactionRequest req = new TransactionRequest();
         req.amount = BigDecimal.valueOf(5000);
         req.date = LocalDate.now();
-        req.categoryId = 1L;
+//        req.category = 1L;
 
         HttpSession session = mock(HttpSession.class);
         when(session.getAttribute("USER_ID")).thenReturn(1L);

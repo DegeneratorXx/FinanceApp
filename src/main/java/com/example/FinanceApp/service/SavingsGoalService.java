@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,7 +46,22 @@ public class SavingsGoalService {
     }
 
     public SavingsGoalResponse create(SavingsGoalRequest request,HttpSession session){
-    User user = getLoggedInUser(session);
+        if (request.targetAmount == null || request.targetAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Invalid target amount");
+        }
+
+        if (request.targetDate.isBefore(LocalDate.now())) {
+            throw new RuntimeException("Target date must be in the future");
+        }
+
+        LocalDate startDate =
+                request.startDate != null ? request.startDate : LocalDate.now();
+
+        if (startDate.isAfter(request.targetDate)) {
+            throw new RuntimeException("Start date cannot be after target date");
+        }
+
+        User user = getLoggedInUser(session);
     SavingsGoal goal= SavingsGoal.builder()
             .goalName(request.goalName)
             .targetAmount(request.targetAmount)
@@ -110,35 +126,30 @@ public class SavingsGoalService {
 
     private SavingsGoalResponse map(SavingsGoal goal, User user) {
 
-        BigDecimal totalIncome = BigDecimal.ZERO;
-        BigDecimal totalExpense = BigDecimal.ZERO;
-        List<Transaction> transactions =
+        List<Transaction> txns =
                 transactionRepository.findByUserIdAndDateBetween(
                         user.getId(),
                         goal.getStartDate(),
                         LocalDate.now()
                 );
 
-        for (Transaction t : transactions) {
+        BigDecimal income = BigDecimal.ZERO;
+        BigDecimal expense = BigDecimal.ZERO;
+
+        for (Transaction t : txns) {
             if (t.getCategory().getType() == CategoryType.INCOME) {
-                totalIncome = totalIncome.add(t.getAmount());
+                income = income.add(t.getAmount());
             } else {
-                totalExpense = totalExpense.add(t.getAmount());
+                expense = expense.add(t.getAmount());
             }
         }
 
-        BigDecimal progress = totalIncome.subtract(totalExpense);
+        BigDecimal progress = income.subtract(expense);
         if (progress.compareTo(BigDecimal.ZERO) < 0) {
             progress = BigDecimal.ZERO;
         }
 
-        BigDecimal remaining = goal.getTargetAmount().subtract(progress);
-        if (remaining.compareTo(BigDecimal.ZERO) < 0) {
-            remaining = BigDecimal.ZERO;
-        }
 
-        double percentage =
-                (progress.doubleValue() / goal.getTargetAmount().doubleValue()) * 100;
 
         SavingsGoalResponse res = new SavingsGoalResponse();
         res.id = goal.getId();
@@ -147,9 +158,9 @@ public class SavingsGoalService {
         res.targetDate = goal.getTargetDate();
         res.startDate = goal.getStartDate();
         res.currentProgress = progress;
-        res.remainingAmount = remaining;
-        res.progressPercentage =
-                Math.round(percentage * 100.0) / 100.0;
+        res.remainingAmount = goal.getTargetAmount().subtract(progress).max(BigDecimal.ZERO);
+        res.progressPercentage = progress.multiply(BigDecimal.valueOf(100))
+                        .divide(goal.getTargetAmount(), 2, RoundingMode.HALF_UP).doubleValue();
 
         return res;
     }

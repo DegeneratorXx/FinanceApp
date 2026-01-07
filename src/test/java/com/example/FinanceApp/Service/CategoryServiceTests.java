@@ -5,6 +5,7 @@ import com.example.FinanceApp.entity.Category;
 import com.example.FinanceApp.entity.CategoryType;
 import com.example.FinanceApp.entity.User;
 import com.example.FinanceApp.repository.CategoryRepository;
+import com.example.FinanceApp.repository.TransactionRepository;
 import com.example.FinanceApp.repository.UserRepository;
 import com.example.FinanceApp.service.CategoryService;
 import jakarta.servlet.http.HttpSession;
@@ -20,9 +21,10 @@ class CategoryServiceTests {
 
     CategoryRepository categoryRepository = mock(CategoryRepository.class);
     UserRepository userRepository = mock(UserRepository.class);
+    TransactionRepository transactionRepository =mock(TransactionRepository.class);
 
     CategoryService categoryService =
-            new CategoryService(categoryRepository, userRepository);
+            new CategoryService(categoryRepository, userRepository,transactionRepository);
 
     @Test
     void getCategories_success() {
