@@ -1,55 +1,37 @@
 package com.example.FinanceApp.client;
 
+import com.google.genai.Client;
+import com.google.genai.types.GenerateContentResponse;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.List;
-import java.util.Map;
+import org.springframework.stereotype.Component;
 
 @Component
 public class GeminiClient {
 
-    private final WebClient webClient;
-    private final String apiKey;
+    private final Client client;
 
     public GeminiClient(
             @Value("${gemini.api.key}") String apiKey
     ){
-        this.apiKey=apiKey;
-        this.webClient= WebClient.builder()
-                .baseUrl("https://generativelanguage.googleapis.com/v1")
+        this.client=Client.builder()
+                .apiKey(apiKey)
                 .build();
     }
 
-    public String generate(String prompt){
-        Map<String,Object> body= Map.of(
-                "contents", new Object[]{
-                        Map.of(
-                                "parts", new Object[]{
-                                        Map.of("text",prompt)
-                                }
-                        )
-                }
-        );
-
-        return webClient.post().uri(uriBuilder -> uriBuilder
-                                    .path("/models/gemini-2.5-flash:generateContent")
-                                    .queryParam("key",apiKey)
-                                    .build()
-        )
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(Map.class)
-                .map(response->{
-                    var candidates=(List<Map<String,Object>>) response.get("candidates");
-                    var content = (Map<String, Object>) candidates.get(0).get("content");
-                    var parts = (java.util.List<Map<String, String>>) content.get("parts");
-                    return parts.get(0).get("text");
-
-                })
-                .block();
+    public String ask(String prompt){
+        try {
+            GenerateContentResponse response = client.models.generateContent(
+                    "gemini-2.5-flash",
+                    prompt,
+                    null
+            );
+            return response.text();
+        }
+        catch (Exception e){
+            return "AI service is currently unavailable "+ e.getMessage();
+        }
     }
+
+
 }
