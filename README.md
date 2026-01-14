@@ -18,12 +18,8 @@ It distinguishes itself with a built-in **Generative AI Assistant**, powered by 
 * **Intent Classification:** A local intent classifier filters queries to ensure the AI stays on topic (Finance & System Architecture).
 * **Architecture Explainer:** Capable of explaining internal technical details, such as the H2 database setup or Session-based authentication flow.
 * **Markdown Rendering:** The Chat UI renders rich text responses (bold, lists, code blocks) using `Marked.js`.
-
-### 💻 Interactive Frontend
-* **Single-Page Chat UI:** A responsive, lightweight HTML/JS interface served directly by the backend.
-* **Seamless Auth:** Taps into the backend's session cookie (JSESSIONID), eliminating the need for separate API tokens.
-* **Real-time Interaction:** Instant responses via the `com.google.genai` SDK.
-
+  
+![FinanceApp Chat UI](assets/chatUi.png)
 ### 💸 Core Finance Modules
 * **Transactions:** Track Income and Expenses with immutable dates and category validation.
 * **Smart Savings Goals:** Goals automatically update progress based on your net income calculation:
@@ -82,11 +78,6 @@ graph LR
 - **AI Integration:** Google GenAI **SDK** (`google-genai`)
 - **Database:** H2 (In-Memory) / Spring Data **JPA**
 - **Build Tool:** Maven
-
-### Frontend
-
-- **Core:** **HTML5**, **CSS3**, Vanilla JavaScript
-- **Libraries:** `Marked.js` (Markdown parsing)
 
 ### DevOps & Deployment
 
