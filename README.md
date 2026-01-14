@@ -1,200 +1,210 @@
-# 💰 FinanceApp – Personal Finance Management API
+# 💰 FinanceApp – AI-Powered Personal Finance API
 
-FinanceApp is a robust backend REST API designed for personal finance management. It allows users to track income and expenses, manage categories, set savings goals, and generate detailed financial reports.
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Docker](https://img.shields.io/badge/Docker-Enabled-blue.svg)](https://www.docker.com/)
+[![Gemini AI](https://img.shields.io/badge/AI-Gemini%201.5%20Flash-8E75B2.svg)](https://deepmind.google/technologies/gemini/)
 
-The project is built using **Java 21** and **Spring Boot**, adhering to a clean layered architecture with session-based authentication and real-world business validations.
+**FinanceApp** is a full-stack personal finance management system designed to help users track expenses, manage savings goals, and visualize financial health.
+
+It distinguishes itself with a built-in **Generative AI Assistant**, powered by **Google Gemini 1.5 Flash**. The AI is "context-aware"—it understands the specific API structure, database schema, and security model of the application, allowing users to ask technical questions (e.g., *"How does auth work?"*) or functional questions (e.g., *"How do I add a transaction?"*) in natural language.
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-### 👤 User Authentication & Security
-* **Secure Registration:** User registration with strict input validations.
-* **Session Management:** Login & logout using session-based authentication.
-* **Data Isolation:** Complete separation of data between users.
-* **Security:** Centralized exception handling and protection for secured endpoints.
+### 🤖 Context-Aware AI Assistant (New!)
+* **Deep Integration:** The AI is not a generic chatbot. It operates with a **System Context** that contains the app's full API documentation and architectural details.
+* **Intent Classification:** A local intent classifier filters queries to ensure the AI stays on topic (Finance & System Architecture).
+* **Architecture Explainer:** Capable of explaining internal technical details, such as the H2 database setup or Session-based authentication flow.
+* **Markdown Rendering:** The Chat UI renders rich text responses (bold, lists, code blocks) using `Marked.js`.
 
-### 🗂 Category Management
-* **System & Custom Categories:** Pre-seeded default categories (Income & Expense) and support for user-defined custom categories.
-* **Validation:** Prevents duplicate category names per user.
-* **Integrity:** Default categories and categories currently in use by transactions cannot be deleted.
+### 💻 Interactive Frontend
+* **Single-Page Chat UI:** A responsive, lightweight HTML/JS interface served directly by the backend.
+* **Seamless Auth:** Taps into the backend's session cookie (JSESSIONID), eliminating the need for separate API tokens.
+* **Real-time Interaction:** Instant responses via the `com.google.genai` SDK.
 
-### 💸 Transaction Management
-* **CRUD Operations:** Create, read, update (immutable dates), and delete income/expense transactions.
-* **Robust Validations:**
-  * Amounts must be positive.
-  * Future-dated transactions are restricted.
-  * Category validation.
-* **Filtering:** Filter transactions by category or specific date ranges.
-
-### 🎯 Savings Goals
-* **Goal Tracking:** Set target amounts and dates.
-* **Smart Calculation:** Automatic progress tracking based on:
+### 💸 Core Finance Modules
+* **Transactions:** Track Income and Expenses with immutable dates and category validation.
+* **Smart Savings Goals:** Goals automatically update progress based on your net income calculation:
   $$\text{Progress} = \text{Total Income} - \text{Total Expenses} (\text{since goal start})$$
-* **Real-time Updates:** Progress, remaining amount, and percentage update automatically when transactions change.
-
-### 📊 Financial Reports
-* **Insights:** Generate monthly and yearly financial summaries.
-* **Breakdowns:** Category-wise analysis of income and expenses.
-* **Net Savings:** Automated calculation of net savings.
+* **Reports:** Generate Monthly and Yearly financial summaries.
+* **Category Management:** System defaults (Salary, Rent) + User-defined custom categories.
 
 ---
 
-## 🏗 Architecture
 
-The application follows a strict **Layered Architecture** to ensure separation of concerns:
+## 🏗 System Architecture
 
-`Controller` → `Service` → `Repository`
+The application follows a robust **Layered Architecture** with a dedicated integration path for the AI service.
 
-* **Controller Layer:** Handles REST API endpoints and request mapping.
-* **Service Layer:** Contains core business logic and validations.
-* **Repository Layer:** Manages data persistence using **Spring Data JPA**.
-* **DTOs:** Separates internal entities from request/response models.
-* **Global Exception Handler:** Centralized error management for consistent API responses.
+### 1. High-Level Data Flow
+
+```mermaid
+graph LR
+    User[User / Frontend] -->|HTTP Request| Security[Spring Security Filter]
+    Security -->|Authorized| Controller[Controller Layer]
+    
+    subgraph "Core Logic"
+    Controller --> Service[Service Layer]
+    Service --> Repo[Repository Layer]
+    Repo --> DB[(H2 Database)]
+    end
+    
+    subgraph "AI Integration Layer"
+    Controller --> ChatSvc[AiExplanationService]
+    ChatSvc --> Context[System Context Injection]
+    Context --> SDK[Google GenAI SDK]
+    SDK --> Gemini[Google Gemini API]
+    end
+```
+
+### 2. Component Details
+
+- **Security Layer:**  Uses **Session-Based Authentication** (`**JSESSIONID**`).
+- Public access permitted for Auth APIs (`/api/auth/**`) and Frontend (`index.html`).
+- All other endpoints are secured behind `HttpSession` validation.
+- **AI Service Layer (`AiExplanationService`):**
+- Acts as the *Prompt Engineer* for the system.
+- Injects a **System Instruction** block containing the **API** Schema and Business Rules into every request.
+- Ensures the AI acts as a *Product Expert* rather than a generic bot.
+
+- **DB Development:** H2 In-Memory Database (resets on restart).
 
 ---
 
 ## 🛠 Technology Stack
 
 ### Backend
-* **Language:** Java 21
-* **Framework:** Spring Boot 4.0.1 (Web, Security, Data JPA)
-* **Build Tool:** Maven
 
-### Database
-* **Development:** H2 (In-memory database)
-* **Production Capable:** PostgreSQL (Ready for integration)
+- **Language:** Java 21
+- **Framework:** Spring Boot 4.0.1
+- **AI Integration:** Google GenAI **SDK** (`google-genai`)
+- **Database:** H2 (In-Memory) / Spring Data **JPA**
+- **Build Tool:** Maven
 
-### Tools & DevOps
-* **Containerization:** Docker
-* **Utilities:** Lombok
+### Frontend
 
----
+- **Core:** **HTML5**, **CSS3**, Vanilla JavaScript
+- **Libraries:** `Marked.js` (Markdown parsing)
 
-## 🔐 Security 
+### DevOps & Deployment
 
-### Security Implementation
-* **Session-Based Auth:** Stateless REST principles with session management.
-* **Access Control:** Unauthorized and Forbidden access handling.
-* **Data Privacy:** No sensitive data is exposed in API responses.
-
-
+- **Containerization:** Docker (Multi-stage build)
+- **Platform:** Render
+- **CI/CD:** Auto-deploy from GitHub
 
 ---
 
-## 🌐 API Endpoints
+## 🌐 API Reference
 
-### Authentication
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/api/auth/register` | Register a new user |
-| `POST` | `/api/auth/login` | Login user |
-| `POST` | `/api/auth/logout` | Logout user |
+### 🤖 AI Chat Endpoint
 
-### Categories
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/categories` | List all categories |
-| `POST` | `/api/categories` | Create a custom category |
-| `DELETE` | `/api/categories/{name}` | Delete a category |
+| Method | Endpoint | Body | Description |
+| --- | --- | --- | --- |
+| `POST` | `/api/chat` | `{ *query*: *your question* }` | Sends a prompt to the context-aware AI. |
 
-### Transactions
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/transactions` | Get all transactions (with filters) |
-| `POST` | `/api/transactions` | Create a transaction |
-| `PUT` | `/api/transactions/{id}` | Update a transaction |
-| `DELETE` | `/api/transactions/{id}` | Delete a transaction |
+### 🔐 Authentication
 
-### Savings Goals
 | Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/goals` | List all savings goals |
-| `GET` | `/api/goals/{id}` | Get specific goal details |
-| `POST` | `/api/goals` | Create a savings goal |
-| `PUT` | `/api/goals/{id}` | Update a goal |
-| `DELETE` | `/api/goals/{id}` | Delete a goal |
+| --- | --- | --- |
+| `POST` | `/api/auth/register` | Register new user. |
+| `POST` | `/api/auth/login` | Login and receive Session Cookie. |
+| `POST` | `/api/auth/logout` | Invalidate session. |
 
-### Reports
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/reports/monthly/{year}/{month}` | Get monthly financial report |
-| `GET` | `/api/reports/yearly/{year}` | Get yearly financial summary |
+### 💰 Transactions
 
-### System
 | Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/health` | Health check |
+| --- | --- | --- |
+| `GET` | `/api/transactions` | List all transactions. |
+| `POST` | `/api/transactions` | Create a new transaction. |
+| `PUT` | `/api/transactions/{id}` | Update transaction details. |
+| `DELETE` | `/api/transactions/{id}` | Delete a transaction. |
 
 ---
-
-## 🗄 Database Schema
-
-The system uses a relational model with the following entities:
-
-1.  **Users:** Stores credentials and profile info.
-2.  **Category:** Types of income/expenses (linked to Users).
-3.  **Transaction:** Financial records linked to Categories and Users.
-4.  **Savings Goal:** Targets tracked against User's financial progress.
-
-> **Note:** Default categories (Salary, Food, Rent, Utilities) are seeded at startup via `DataInitializer`.
-
----
-
-## ⚙ Configuration
-
-**`application.properties`**
-```properties
-spring.application.name=FinanceApp
-
-# H2 Database Configuration
-spring.datasource.url=jdbc:h2:mem:testdb
-spring.datasource.driver-class-name=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=
-
-# JPA / Hibernate
-spring.jpa.hibernate.ddl-auto=update
-spring.h2.console.enabled=true
-
-```
-## Data Seeding
-
-The application is seeded with some default data for categories upon startup. This includes categories like "Salary", "Food", "Rent", etc. This is handled by the `DataInitializer` class.
-
 
 ## ▶ Getting Started
 
 ### Prerequisites
-* Java 21
-* Maven
-* Docker (Optional)
 
-### Run Locally
-```bash
-# Clone the repository
-git clone [https://github.com/yourusername/financeapp.git](https://github.com/yourusername/financeapp.git)
+- Java 21 **SDK**
+- Maven
+- **Google Gemini **API** Key** (Get one at [aistudio.google.com](https://aistudio.google.com/))
 
-# Navigate to directory
-cd financeapp
+### 1. Run Locally
 
-# Run using Maven wrapper
-./mvnw spring-boot:run
+```bash # Clone the repository git clone [https://github.com/yourusername/financeapp.git](https://github.com/yourusername/financeapp.git) cd financeapp
+
+# Run the app (Replace with your actual API Key)
+
+# Windows (PowerShell) $env:GEMINI_API_KEY=*your_api_key_here*; ./mvnw spring-boot:run
+
+# Mac/Linux
+
+export GEMINI_API_KEY=your_api_key_here ./mvnw spring-boot:run
 
 ```
 
-*Application starts at: `http://localhost:8080*`
+### 2. Access the App
 
-### 🐳 Docker Support
+Once running, open your browser to: 👉 **[http://localhost:**8080**](https://[www.google.com/search?q=http://localhost:**8080**](https://www.google.com/search?q=http://localhost:**8080**))**
 
-**Build Image**
+1. **Login** with default credentials: `[john.doe@example.com](mailto:john.doe@example.com)` / `password123`.
+2. **Chat** with the assistant using the interface.
+
+---
+
+## 🐳 Docker Support
+
+You can run the entire stack (Frontend + Backend + AI) in a single container.
+
+**1. Build the Image**
 
 ```bash
 docker build -t financeapp .
 ```
 
-**Run Container**
+**2. Run the Container** Pass your **API** key as an environment variable:
 
 ```bash
-docker run -p 8080:8080 financeapp
+docker run -p 8080:8080 -e GEMINI_API_KEY=your_actual_api_key financeapp
 ```
+
+## 🚀 Deployment (Docker Hub Method)
+
+Since this project uses a custom Docker setup, the deployment strategy relies on building the image locally and pushing it to a container registry (Docker Hub) before deploying to Render.
+
+### 1. Build & Push Image
+Run these commands in your local terminal to upload your application image to Docker Hub.
+
+```bash
+docker login
+docker build -t your-username/financeapp:latest .
+docker push your-username/financeapp:latest
+```
+
+### 2. Deploy on Render
+
+1.  Log in to your [Render Dashboard](https://dashboard.render.com/).
+2.  Click **New +** and select **Web Service**.
+3.  Choose **"Deploy an existing image from a registry"**.
+4.  Enter your image URL:
+    `docker.io/your-username/financeapp:latest`
+5.  Click **Next**.
+6.  **Configure Environment:**
+  * Scroll down to **Environment Variables**.
+  * Click **Add Environment Variable**.
+  * **Key:** `GEMINI_API_KEY`
+  * **Value:** `(Paste your actual Google Gemini API Key here)`
+7.  Click **Create Web Service**.
+
+#### Now Render will automatically build the Docker image and deploy.
+
+
+## 📧 Contact
+
+**Author:** [Lakshit Khandelwal]
+* **GitHub:** [github.com/degeneratorXx](https://github.com/degeneratorXx)
+* **Email:** lakshitkhandelwal.dev@gmail.com
+
+_Built with ❤️ using Java, Spring Boot, and Google Gemini AI._
