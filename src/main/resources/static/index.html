@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanceApp AI Support</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { width: 400px; background: white; padding: 20px; box-shadow: 0 0 15px rgba(0,0,0,0.1); border-radius: 8px; }
+
+        /* Login Screen */
+        #login-screen { text-align: center; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #218838; }
+
+        /* Chat Screen */
+        #chat-screen { display: none; display: flex; flex-direction: column; height: 500px; }
+        #chat-header { font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        #logout-btn { background: #dc3545; padding: 5px 10px; font-size: 12px; width: auto; }
+        #chat-box { flex: 1; overflow-y: auto; padding: 10px; border: 1px solid #eee; background: #fafafa; border-radius: 4px; margin-bottom: 10px; }
+
+        /* Messages */
+        .message { margin: 5px 0; padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 14px; line-height: 1.4; }
+        .user-msg { background-color: #007bff; color: white; align-self: flex-end; margin-left: auto; }
+        .bot-msg { background-color: #e9ecef; color: #333; align-self: flex-start; }
+        .error-msg { background-color: #ffebee; color: #c62828; text-align: center; font-size: 12px; }
+        /* Add inside <style> */
+        .bot-msg p { margin: 5px 0; }
+        .bot-msg ul { margin: 5px 0; padding-left: 20px; }
+        .bot-msg code { background: #dcdcdc; padding: 2px 4px; border-radius: 4px; font-family: monospace; }
+        .bot-msg strong { font-weight: bold; color: #0056b3; }
+        /* Input Area */
+        .input-area { display: flex; gap: 10px; }
+        #user-input { flex: 1; margin: 0; }
+        #send-btn { width: auto; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+
+    <div id="login-screen">
+        <h2>FinanceApp Login</h2>
+        <input type="text" id="username" placeholder="Username (Email)" value="john.doe@example.com">
+        <input type="password" id="password" placeholder="Password" value="password123">
+        <button onclick="login()">Login</button>
+        <p id="login-error" style="color:red; display:none; margin-top: 10px;"></p>
+    </div>
+
+    <div id="chat-screen" style="display: none;">
+        <div id="chat-header">
+            <span>🤖 Finance Assistant</span>
+            <button id="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        <div id="chat-box">
+            <div class="message bot-msg">Hello! I can help you manage your finances. Ask me anything!</div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Type a message..." onkeypress="handleEnter(event)">
+            <button id="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const API_BASE = window.location.origin + "/api";
+
+    async function login() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorMsg = document.getElementById('login-error');
+
+        try {
+            const response = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (response.ok) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('chat-screen').style.display = 'flex';
+            } else {
+                errorMsg.innerText = "Login failed. Check credentials.";
+                errorMsg.style.display = 'block';
+            }
+        } catch (error) {
+            errorMsg.innerText = "Network error.";
+            errorMsg.style.display = 'block';
+        }
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('user-input');
+        const message = input.value.trim();
+        if (!message) return;
+
+        // 1. Add User Message to UI
+        addMessage(message, 'user-msg');
+        input.value = '';
+
+        try {
+            // 2. Call Chat API
+            const response = await fetch(`${API_BASE}/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: message })
+            });
+
+            if (response.status === 401) {
+                alert("Session expired. Please login again.");
+                location.reload();
+                return;
+            }
+
+            const data = await response.json();
+
+            // 3. Add AI Response to UI
+            addMessage(data.answer, 'bot-msg');
+
+        } catch (error) {
+            addMessage("Error connecting to server.", 'error-msg');
+        }
+    }
+
+    function addMessage(text, className) {
+        const chatBox = document.getElementById('chat-box');
+        const div = document.createElement('div');
+        div.className = `message ${className}`;
+
+        // ✅ NEW: If it's a bot message, parse Markdown to HTML
+        if (className.includes('bot-msg')) {
+            div.innerHTML = marked.parse(text);
+        } else {
+            // User messages are just plain text (to prevent XSS)
+            div.innerText = text;
+        }
+
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function logout() {
+        await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
+        location.reload();
+    }
+
+    function handleEnter(e) {
+        if (e.key === 'Enter') sendMessage();
+    }
+</script>
+</body>
+</html>

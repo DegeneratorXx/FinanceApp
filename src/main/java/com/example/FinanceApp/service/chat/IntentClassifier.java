@@ -38,7 +38,7 @@ public class IntentClassifier {
             "api", "endpoint", "ai", "gemini", "bot", "assistant",
 
             //general
-            "help"
+            "help","hi","hello"
     );
 
     public Intent classify(String message){
