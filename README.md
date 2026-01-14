@@ -19,7 +19,7 @@ It distinguishes itself with a built-in **Generative AI Assistant**, powered by 
 * **Architecture Explainer:** Capable of explaining internal technical details, such as the H2 database setup or Session-based authentication flow.
 * **Markdown Rendering:** The Chat UI renders rich text responses (bold, lists, code blocks) using `Marked.js`.
   
-![FinanceApp Chat UI](assets/chatUi.png)
+![FinanceApp Chat UI](assets/chat-Ui.png)
 ### 💸 Core Finance Modules
 * **Transactions:** Track Income and Expenses with immutable dates and category validation.
 * **Smart Savings Goals:** Goals automatically update progress based on your net income calculation:
