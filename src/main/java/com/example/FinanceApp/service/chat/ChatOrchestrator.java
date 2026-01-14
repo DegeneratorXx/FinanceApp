@@ -19,30 +19,25 @@ public class ChatOrchestrator {
         // Classify the message
         IntentClassifier.Intent intent = intentClassifier.classify(userMessage);
 
+        // ✅ Use Switch Expression (Clean, no 'return' inside cases)
         return switch (intent) {
             case REPORT_MONTHLY ->
-                    "You can view your monthly report from Reports → Monthly section.";
+                    aiExplainationService.answerSpecificQuestion("How do I see my monthly report?");
 
             case REPORT_YEARLY ->
-                    "Your yearly financial summary is available in Reports → Yearly.";
+                    aiExplainationService.answerSpecificQuestion("How do I see my yearly summary?");
 
-            case GOAL_PROGRESS ->
-                    "Savings goal progress is calculated using your income minus expenses since the goal start date.";
+            // For all these finance topics, pass the user's question directly to AI
+            case GENERAL_HELP, TRANSACTION_HELP, CATEGORY_HELP, GOAL_PROGRESS ->
+                    aiExplainationService.answerSpecificQuestion(userMessage);
 
-            case TRANSACTION_HELP ->
-                    aiExplainationService.explainTransactionFlow();
-
-            case CATEGORY_HELP ->
-                    aiExplainationService.explainCategoryUsage();
-
-            case GENERAL_HELP ->
-                    aiExplainationService.generalHelp();
-
+            // Validation / Error cases
             case UNSUPPORTED ->
                     throw new UnsupportedChatQueryException();
 
+            // Fallback for safety
             default ->
-                    "I am not sure how to help with that.";
+                    throw new UnsupportedChatQueryException();
         };
     }
 }

@@ -2,6 +2,8 @@ package com.example.FinanceApp.service.chat;
 
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class IntentClassifier {
 
@@ -15,37 +17,40 @@ public class IntentClassifier {
         UNSUPPORTED
     }
 
-    public Intent classify(String query){
-        String q = query.toLowerCase();
+    // Expanded keywords to include Architecture, Security, and Tech Stack
+    private static final List<String> ALLOWED_KEYWORDS = List.of(
+            // 1. Core Features
+            "transaction", "expense", "income", "money", "save", "saving",
+            "goal", "budget", "report", "month", "year", "summary",
+            "category", "custom", "default", "add", "create", "delete",
+            "update", "check", "how to", "app", "finance",
 
-        // Reports
-        if (q.contains("monthly") || q.contains("month")) {
-            return Intent.REPORT_MONTHLY;
-        }
+            // 2. Auth & Security
+            "login", "register", "logout", "auth", "authentication",
+            "security", "session", "cookie", "token", "user", "access",
 
-        if (q.contains("yearly") || q.contains("year")) {
-            return Intent.REPORT_YEARLY;
-        }
+            // 3. Architecture & Tech Stack
+            "architecture", "structure", "layer", "controller", "service", "repository",
+            "database", "db", "h2", "java", "spring", "boot", "maven",
+            "tech", "stack", "design", "internal", "system",
 
-        // Goals
-        if (q.contains("goal") || q.contains("saving") || q.contains("progress")) {
-            return Intent.GOAL_PROGRESS;
-        }
+            // 4. AI & API
+            "api", "endpoint", "ai", "gemini", "bot", "assistant",
 
-        // Transactions
-        if (q.contains("transaction") || q.contains("expense") || q.contains("income")) {
-            return Intent.TRANSACTION_HELP;
-        }
+            //general
+            "help"
+    );
 
-        // Categories
-        if (q.contains("category")) {
-            return Intent.CATEGORY_HELP;
-        }
+    public Intent classify(String message){
+        String msg= message.toLowerCase();
 
-        // Help
-        if (q.contains("help") || q.contains("how")) {
+        if(msg.contains("report") && msg.contains("month")) return Intent.REPORT_MONTHLY;
+        if(msg.contains("report") && msg.contains("year")) return Intent.REPORT_YEARLY;
+
+        boolean isRelevant =  ALLOWED_KEYWORDS.stream().anyMatch(msg::contains);
+
+        if(isRelevant)
             return Intent.GENERAL_HELP;
-        }
 
         // Everything else
         return Intent.UNSUPPORTED;
